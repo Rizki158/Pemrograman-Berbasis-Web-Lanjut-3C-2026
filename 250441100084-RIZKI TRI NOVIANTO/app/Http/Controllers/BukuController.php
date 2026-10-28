@@ -9,8 +9,8 @@ class BukuController extends Controller
 {
     public function index()
     {
-        $daftarBuku = Buku::with('kategori')->get();
-        return view('buku.index', compact('daftarBuku'));
+        
+        return view('buku.index');
     }
 
     public function show($id)

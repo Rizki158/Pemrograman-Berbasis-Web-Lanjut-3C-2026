@@ -7,60 +7,60 @@ use App\Models\Buku;
 use App\Models\Kategori;
 use App\Http\Requests\StoreBukuRequest;
 use App\Http\Requests\UpdateBukuRequest;
+use App\Http\Resources\BukuResource;
 use Illuminate\Http\Request;
 
 class BukuController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Buku::with('kategori');
+        $query = Buku::with('kategori')
+            ->withCount('peminjamans')
+            ->latest();
 
-        // Fitur Pencarian (Judul / Penulis)
-        if ($request->has('q')) {
-            $q = $request->q;
-            $query->where(function ($k) use ($q) {
-                $k->where('judul', 'like', "%{$q}%")
-                  ->orWhere('penulis', 'like', "%{$q}%");
+        if ($request->has('cari') && $request->cari != '') {
+            $cari = $request->cari;
+            $query->where(function ($q) use ($cari) {
+                $q->where('judul', 'like', "%{$cari}%")
+                  ->orWhere('penulis', 'like', "%{$cari}%");
             });
         }
 
-        // Filter Kategori
-        if ($request->has('kategori_id')) {
-            $query->where('kategori_id', $request->kategori_id);
+        if ($request->has('kategori') && $request->kategori != '') {
+            $query->where('kategori_id', $request->kategori);
         }
 
-        // Filter Tahun
-        if ($request->has('tahun')) {
+        if ($request->has('tahun') && $request->tahun != '') {
             $query->where('tahun_terbit', $request->tahun);
         }
 
-        $buku = $query->paginate(10);
+        $bukus = $query->paginate(10)->withQueryString();
 
-        return response()->json([
-            'status' => 'success',
-            'data'   => $buku
-        ], 200);
+        return BukuResource::collection($bukus);
     }
 
     public function store(StoreBukuRequest $request)
     {
         $buku = Buku::create($request->validated());
+        $buku->load('kategori');
 
-        return response()->json([
-            'message' => 'Buku berhasil ditambahkan.',
-            'data'    => $buku
-        ], 201);
+        return (new BukuResource($buku))
+            ->additional(['message' => 'Buku berhasil ditambahkan'])
+            ->response()
+            ->setStatusCode(201);
     }
 
     public function show($id)
     {
-        $buku = Buku::with('kategori')->find($id);
+        $buku = Buku::with(['kategori', 'peminjamans'])->find($id);
 
         if (!$buku) {
-            return response()->json(['message' => 'Buku tidak ditemukan.'], 404);
+            return response()->json([
+                'message' => 'not found'
+            ], 404);
         }
 
-        return response()->json(['data' => $buku], 200);
+        return new BukuResource($buku);
     }
 
     public function update(UpdateBukuRequest $request, $id)
@@ -68,15 +68,16 @@ class BukuController extends Controller
         $buku = Buku::find($id);
 
         if (!$buku) {
-            return response()->json(['message' => 'Buku tidak ditemukan.'], 404);
+            return response()->json([
+                'message' => 'not found'
+            ], 404);
         }
 
         $buku->update($request->validated());
+        $buku->load('kategori');
 
-        return response()->json([
-            'message' => 'Buku berhasil diperbarui.',
-            'data'    => $buku
-        ], 200);
+        return (new BukuResource($buku))
+            ->additional(['message' => 'Buku Berhasil diperbarui']);
     }
 
     public function destroy($id)
@@ -84,27 +85,31 @@ class BukuController extends Controller
         $buku = Buku::find($id);
 
         if (!$buku) {
-            return response()->json(['message' => 'Buku tidak ditemukan.'], 404);
+            return response()->json([
+                'message' => 'not found'
+            ], 404);
         }
 
         $buku->delete();
 
-        return response()->json(['message' => 'Buku berhasil dihapus.'], 200);
+        return response()->json([
+            'message' => 'Buku berhasil dihapus'
+        ], 200);
     }
 
-    // Rekap Agregasi 1: Jumlah buku per kategori
-    public function bukuPerKategori()
+    public function rekapBukuPerKategori()
     {
         $rekap = Kategori::withCount('bukus')->get();
-
-        return response()->json(['data' => $rekap], 200);
+        return response()->json([
+            'data' => $rekap
+        ], 200);
     }
 
-    // Rekap Agregasi 2: Rekap daftar peminjaman per buku
-    public function peminjamanPerBuku()
+    public function rekapPeminjamanPerBuku()
     {
-        $rekap = Buku::select('id', 'judul')->get();
-
-        return response()->json(['data' => $rekap], 200);
+        $rekap = Buku::withCount('peminjamans')->get();
+        return response()->json([
+            'data' => $rekap
+        ], 200);
     }
 }

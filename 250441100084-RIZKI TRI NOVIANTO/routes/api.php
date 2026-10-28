@@ -1,11 +1,16 @@
 <?php
 
+
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\BukuController;
 
-// Resource API Buku
-Route::apiResource('buku', BukuController::class);
+Route::get('/user', function (Request $request) {
+    return $request->user();
+})->middleware('auth:sanctum');
 
-// Route Rekap Agregasi
-Route::get('/rekap/buku-per-kategori', [BukuController::class, 'bukuPerKategori']);
-Route::get('/rekap/peminjaman-per-buku', [BukuController::class, 'peminjamanPerBuku']);
+Route::apiResource('buku', BukuController::class)->names('api.buku');
+
+Route::get('/rekap/buku-per-kategori',[BukuController::class,'rekapBukuPerKategori']);
+
+Route::get('/rekap/peminjaman-per-buku',[BukuController::class,'rekapPeminjamanPerBuku']);
