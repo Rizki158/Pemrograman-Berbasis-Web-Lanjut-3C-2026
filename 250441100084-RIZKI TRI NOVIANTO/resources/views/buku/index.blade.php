@@ -1,5 +1,3 @@
-@extends('layouts.app')
-
 @section('title', 'Daftar Buku')
 
 @section('content')
@@ -12,7 +10,7 @@
         @foreach ($daftarBuku as $buku)
             <x-kartu-buku :buku="$buku">
                 {{-- Default slot: bagian tambahan --}}
-                <span class="badge">{{ $buku['kategori'] }}</span>
+                <span class="badge">{{ $buku->kategori->nama ?? $buku->kategori }}</span>
 
                 {{-- Named slot: footer kartu --}}
                 <x-slot:footer>
