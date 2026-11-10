@@ -9,7 +9,7 @@ class Buku extends Model
 {
     use HasFactory;
     protected $table = 'bukus';
-    protected $fillable = ['kategori_id','judul','penulis','tahun_terbit'];
+    protected $fillable = ['kategori_id','judul','penulis','tahun_terbit','status'];
 
     public function kategori() {
         return $this -> belongsTo(Kategori::class, 'kategori_id');

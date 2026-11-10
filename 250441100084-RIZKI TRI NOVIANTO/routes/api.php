@@ -11,6 +11,8 @@ Route::get('/user', function (Request $request) {
 
 Route::apiResource('buku', BukuController::class)->names('api.buku');
 
+
+
 Route::get('/rekap/buku-per-kategori',[BukuController::class,'rekapBukuPerKategori']);
 
 Route::get('/rekap/peminjaman-per-buku',[BukuController::class,'rekapPeminjamanPerBuku']);

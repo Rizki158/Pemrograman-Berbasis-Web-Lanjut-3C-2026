@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Buku;
+use App\Models\Kategori;
 
 class BukuController extends Controller
 {
     public function index()
     {
-        
-        return view('buku.index');
+        $bukus = Buku::with('kategori')->get();
+        // Mengambil semua data kategori langsung dari database
+        $kategoris = Kategori::all(); 
+
+        return view('buku.index', compact('bukus', 'kategoris'));
     }
 
     public function show($id)
